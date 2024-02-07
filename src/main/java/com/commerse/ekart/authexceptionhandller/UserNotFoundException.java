@@ -1,4 +1,4 @@
-package com.commerse.ekart.exceptionhandling;
+package com.commerse.ekart.authexceptionhandller;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;
