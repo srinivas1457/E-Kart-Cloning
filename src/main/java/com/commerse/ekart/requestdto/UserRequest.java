@@ -1,16 +1,13 @@
 package com.commerse.ekart.requestdto;
 
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import com.commerse.ekart.enums.UserRole;
 
-@Builder
+import lombok.Data;
+
+
 @Data
-@AllArgsConstructor
-@NoArgsConstructor
 public class UserRequest {
 	private String email;
 	private String password;
-	private String userRole;
+	private UserRole userRole;
 }
