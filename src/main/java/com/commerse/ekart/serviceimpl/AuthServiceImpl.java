@@ -1,6 +1,6 @@
 package com.commerse.ekart.serviceimpl;
 
-import java.util.Optional;
+import java.util.List;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -87,6 +87,14 @@ public class AuthServiceImpl implements AuthService {
 		user.setUserRole(userRequest.getUserRole());
 		
 		return (T)user;
+	}
+	
+	@Override
+	public void deleteNonVerifiedUsers() {
+		List<User> deleteList = userRepo.findByIsEmailVerifiedFalse();
+		if(!deleteList.isEmpty()) {
+			userRepo.deleteAll(deleteList);
+		}
 	}
 
 }

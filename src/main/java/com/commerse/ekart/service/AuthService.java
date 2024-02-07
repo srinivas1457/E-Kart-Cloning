@@ -10,4 +10,6 @@ public interface AuthService {
 
 	ResponseEntity<ResponseStructure<UserResponse>> registerUser(UserRequest userRequest);
 
+	void deleteNonVerifiedUsers();
+
 }
