@@ -8,6 +8,7 @@ import org.springframework.stereotype.Service;
 import com.commerse.ekart.repository.UserRepo;
 
 import lombok.AllArgsConstructor;
+
 @Service
 @AllArgsConstructor
 public class CustomUserDetailsService implements UserDetailsService {
