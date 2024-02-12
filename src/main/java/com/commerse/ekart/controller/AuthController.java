@@ -60,5 +60,11 @@ public class AuthController {
 		return authService.revokeOther(accessToken, refreshToken, response);
 	}
 	
+	@PostMapping("/revoke-all-devices")
+	public ResponseEntity<SimpleResponseStructure> revokeAll(@CookieValue(name="at",required = false)String accessToken,@CookieValue(name="rt",required =false) String refreshToken,
+			HttpServletResponse response){
+		return authService.revokeAll(accessToken, refreshToken, response);
+	}
+	
 
 }
