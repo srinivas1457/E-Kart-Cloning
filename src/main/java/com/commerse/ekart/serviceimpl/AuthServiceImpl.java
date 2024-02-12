@@ -259,11 +259,29 @@ public class AuthServiceImpl implements AuthService {
 	});
 		SimpleResponseStructure structure=new SimpleResponseStructure();
 		structure.setStatusCode(HttpStatus.OK.value());
-		structure.setMessage("Successfully log out all devices");
+		structure.setMessage("Successfully log out Other devices");
 		return new ResponseEntity<SimpleResponseStructure>(structure,HttpStatus.OK);
 	}else throw new IllegalRequestException("you Are not logged in other browsers");
 	}
 
+	
+	@Override
+	public ResponseEntity<SimpleResponseStructure> revokeAll(String accessToken, String refreshToken,
+			HttpServletResponse response) {
+		if(SecurityContextHolder.getContext().getAuthentication()!=null) {
+			userRepo.findByUserName(SecurityContextHolder.getContext().getAuthentication().getName())
+			.ifPresent(user-> {
+
+				blockAccessTokens(accessTokenRepo.findByUserAndIsBlocked(user, false));
+
+				blockRefreshTokens (refreshTokenRepo.findByUserAndIsBlocked(user, false));
+		});
+			SimpleResponseStructure structure=new SimpleResponseStructure();
+			structure.setStatusCode(HttpStatus.OK.value());
+			structure.setMessage("Successfully log out All devices");
+			return new ResponseEntity<SimpleResponseStructure>(structure,HttpStatus.OK);
+		}else throw new IllegalRequestException("you Are not logged in other browsers");
+	}
 
 //	@Override
 //	public ResponseEntity<String> verifyOTP(OtpModel otpModel) {
@@ -379,5 +397,7 @@ public class AuthServiceImpl implements AuthService {
 		refreshTokenRepo.save(RefreshToken.builder().token(refreshToken).isBlocked(false)
 				.expiration(LocalDateTime.now().plusSeconds(refreshExpiryInSeconds)).user(user).build());
 	}
+
+	
 
 }
