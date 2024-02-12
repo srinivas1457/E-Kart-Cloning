@@ -10,7 +10,7 @@ import com.commerse.ekart.entity.User;
 public interface UserRepo extends JpaRepository<User, Integer> {
 
 	Optional<User> findByEmail(String email);
-	Optional<User> findByUserName(String userName);
+	Optional<User> findByUserName(String username);
 	boolean existsByEmail(String email);
 	List<User> findByIsEmailVerifiedFalse();
 

@@ -11,8 +11,7 @@ import org.springframework.scheduling.annotation.EnableScheduling;
 public class EKartApplication {
 
 	public static void main(String[] args) {
-		SpringApplication.run(EKartApplication.class, args);
-		
+		SpringApplication.run(EKartApplication.class, args);	
 	}
 
 }

@@ -1,17 +1,23 @@
 package com.commerse.ekart.controller;
 
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.CookieValue;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.commerse.ekart.requestdto.AuthRequest;
 import com.commerse.ekart.requestdto.OtpModel;
 import com.commerse.ekart.requestdto.UserRequest;
+import com.commerse.ekart.responsedto.AuthResponse;
 import com.commerse.ekart.responsedto.UserResponse;
 import com.commerse.ekart.service.AuthService;
 import com.commerse.ekart.util.ResponseStructure;
+import com.commerse.ekart.util.SimpleResponseStructure;
 
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 import lombok.AllArgsConstructor;
 
 @RestController
@@ -26,14 +32,28 @@ public class AuthController {
 		return authService.registerUser(userRequest);
 	}
 	
-//	@PostMapping("/verify-otp/{oTP}")
-//	public ResponseEntity<String> verifyOTP(String oTP){
-//		return authService.verifyOTP(oTP);
-//	}
 	
 	@PostMapping("/verify-otp")
 	public ResponseEntity<ResponseStructure<UserResponse>> verifyOTP(@RequestBody OtpModel otpModel){
 		return authService.verifyOTP(otpModel);
 	}
+	
+	@PostMapping("/login")
+	public ResponseEntity<ResponseStructure<AuthResponse>>login(@RequestBody AuthRequest authRequest,HttpServletResponse response){
+		System.out.println("***************************************ravi Br*****************************************");
+		return authService.login(authRequest,response);
+	}
+	
+	////////////////********** Traditional Approach*******************//////////////
+//	@PostMapping("/logout")
+//	public ResponseEntity<String> logOut(HttpServletRequest request ,HttpServletResponse response){
+//		return authService.logOut(request,response);
+//	}
+	////******2nd Approach*****/////
+	@PostMapping("/logout")
+	public ResponseEntity<SimpleResponseStructure> logOut(@CookieValue(name="rt",required = false) String refreshToken,@CookieValue(name="at",required =false) String accessToken ,HttpServletResponse response){
+		return authService.logOut(refreshToken,accessToken,response);
+	}
+	
 
 }
