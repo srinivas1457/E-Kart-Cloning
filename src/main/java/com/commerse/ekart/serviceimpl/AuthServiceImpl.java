@@ -249,6 +249,20 @@ public class AuthServiceImpl implements AuthService {
 		structure.setMessage("logout Successfully");
 		return new ResponseEntity<SimpleResponseStructure>(structure,HttpStatus.OK);
 	}
+	
+	
+	public void cleanupExpiredAccessTokens() {
+		System.out.println("STARTS -> cleanupExpiredAccessTokens()");
+		accessTokenRepo.deleteAll(accessTokenRepo.findAllByExpirationBefore(LocalDateTime.now()));
+		System.out.println("ENDS -> cleanupExpiredAccessTokens()");
+	}
+	
+	public void cleanupExpiredRefreshTokens() {
+		System.out.println("STARTS -> cleanupExpiredRefreshTokens()");
+		refreshTokenRepo.deleteAll(refreshTokenRepo.findAllByExpirationBefore(LocalDateTime.now()));
+		System.out.println("ENDS -> cleanupExpiredRefreshTokens()");
+			
+	}
 
 //	@Override
 //	public ResponseEntity<String> verifyOTP(OtpModel otpModel) {
