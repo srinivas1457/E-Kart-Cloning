@@ -1,5 +1,7 @@
 package com.commerse.ekart.service;
 
+import java.time.LocalDateTime;
+
 import org.springframework.http.ResponseEntity;
 
 import com.commerse.ekart.requestdto.AuthRequest;
@@ -26,5 +28,9 @@ public interface AuthService {
 	ResponseEntity<String> logOut(HttpServletRequest request, HttpServletResponse response);
 
 	ResponseEntity<SimpleResponseStructure> logOut(String refreshToken, String accessToken, HttpServletResponse response);
+	
+	public void cleanupExpiredAccessTokens();
+	
+	public void cleanupExpiredRefreshTokens();
 
 }
