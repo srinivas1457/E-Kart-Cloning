@@ -4,7 +4,6 @@ import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
 import com.commerse.ekart.service.AuthService;
-import com.commerse.ekart.serviceimpl.AuthServiceImpl;
 
 import lombok.AllArgsConstructor;
 
@@ -18,12 +17,12 @@ public class ScheduledJobs {
 		authService.deleteNonVerifiedUsers();
 	}
 	
-	@Scheduled(fixedDelay = 3000L)
+	@Scheduled(fixedDelay = 1000L*60*10)
 	public void callCleanupExpiredAccessTokens() {
 		authService.cleanupExpiredAccessTokens();
 	}
 	
-	@Scheduled(fixedDelay = 3000L)
+	@Scheduled(fixedDelay = 1000L*60*10)
 	public void callCleanupExpiredRefreshTokens() {
 		authService.cleanupExpiredRefreshTokens();
 	}
