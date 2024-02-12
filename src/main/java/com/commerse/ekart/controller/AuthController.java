@@ -40,7 +40,6 @@ public class AuthController {
 	
 	@PostMapping("/login")
 	public ResponseEntity<ResponseStructure<AuthResponse>>login(@RequestBody AuthRequest authRequest,HttpServletResponse response){
-		System.out.println("***************************************ravi Br*****************************************");
 		return authService.login(authRequest,response);
 	}
 	
