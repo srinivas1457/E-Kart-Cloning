@@ -1,13 +1,12 @@
 package com.commerse.ekart.entity;
 
-import com.commerse.ekart.enums.UserRole;
+import java.time.LocalDateTime;
 
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
-import jakarta.persistence.Inheritance;
-import jakarta.persistence.InheritanceType;
+import jakarta.persistence.ManyToOne;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -18,18 +17,15 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @NoArgsConstructor
 @Entity
-@Inheritance(strategy = InheritanceType.JOINED)
-public class User {
+public class RefreshToken {
 	@Id
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
-	private int userId;
-	private String userName;
-	private String email;
-	private String password;
-	private UserRole userRole;
-	private boolean isEmailVerified;
-	private boolean isDeleted;
+	private long tokenId;
+	private String token;
+	private boolean isBlocked;
+	private LocalDateTime expiration;
 	
-	
+	@ManyToOne
+	private User user;
 
 }

@@ -8,15 +8,15 @@ import org.springframework.stereotype.Service;
 import com.commerse.ekart.repository.UserRepo;
 
 import lombok.AllArgsConstructor;
+
 @Service
 @AllArgsConstructor
 public class CustomUserDetailsService implements UserDetailsService {
 	private UserRepo userRepo;
 
 	@Override
-	public UserDetails loadUserByUsername(String userName) throws UsernameNotFoundException {
-		return userRepo.findByUserName(userName).map(user -> new CustomUserDetails(user))
-				.orElseThrow(() -> new UsernameNotFoundException("Failed To Authenticate the User"));
-
+	public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
+		return userRepo.findByUserName(username).map(user->new CustomUserDetails(user))
+				.orElseThrow(()->new UsernameNotFoundException("User Not Authenticated...!!!!"));
 	}
 }
