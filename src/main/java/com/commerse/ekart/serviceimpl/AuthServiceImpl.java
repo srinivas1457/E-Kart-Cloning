@@ -14,6 +14,7 @@ import org.springframework.scheduling.annotation.Async;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -244,8 +245,25 @@ public class AuthServiceImpl implements AuthService {
 
 	public void cleanupExpiredRefreshTokens() {
 		refreshTokenRepo.deleteAll(refreshTokenRepo.findAllByExpirationBefore(LocalDateTime.now()));
-
 	}
+	
+	@Override
+	public ResponseEntity<SimpleResponseStructure> revokeOther(String accessToken, String refreshToken, HttpServletResponse response) {
+		if(SecurityContextHolder.getContext().getAuthentication()!=null) {
+		userRepo.findByUserName(SecurityContextHolder.getContext().getAuthentication().getName())
+		.ifPresent(user-> {
+
+			blockAccessTokens(accessTokenRepo.findByUserAndIsBlockedAndTokenNot(user, false, accessToken));
+
+			blockRefreshTokens (refreshTokenRepo.findByUserAndIsBlockedAndTokenNot(user, false, refreshToken));
+	});
+		SimpleResponseStructure structure=new SimpleResponseStructure();
+		structure.setStatusCode(HttpStatus.OK.value());
+		structure.setMessage("Successfully log out all devices");
+		return new ResponseEntity<SimpleResponseStructure>(structure,HttpStatus.OK);
+	}else throw new IllegalRequestException("you Are not logged in other browsers");
+	}
+
 
 //	@Override
 //	public ResponseEntity<String> verifyOTP(OtpModel otpModel) {
@@ -257,7 +275,20 @@ public class AuthServiceImpl implements AuthService {
 //	}
 
 	///////////////////////// **********************************************//////////////////////////////////
-	
+
+	private void blockAccessTokens(List<AccessToken> accessTokens) {
+		accessTokens.forEach(at -> {
+			at.setBlocked(true);
+			accessTokenRepo.save(at);
+		});
+	}
+
+	private void blockRefreshTokens(List<RefreshToken> accessTokens) {
+		accessTokens.forEach(rt -> {
+			rt.setBlocked(true);
+			refreshTokenRepo.save(rt);
+		});
+	}
 
 	private <T extends User> T maptoRespectiveChild(UserRequest userRequest) {
 		User user = null;

@@ -33,4 +33,7 @@ public interface AuthService {
 	
 	public void cleanupExpiredRefreshTokens();
 
+	ResponseEntity<SimpleResponseStructure> revokeOther(String accessToken, String refreshToken,
+			HttpServletResponse response);
+
 }
