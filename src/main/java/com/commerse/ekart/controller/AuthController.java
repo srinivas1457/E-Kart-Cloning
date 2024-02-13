@@ -16,7 +16,6 @@ import com.commerse.ekart.service.AuthService;
 import com.commerse.ekart.util.ResponseStructure;
 import com.commerse.ekart.util.SimpleResponseStructure;
 
-import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.AllArgsConstructor;
 
@@ -39,8 +38,8 @@ public class AuthController {
 	}
 	
 	@PostMapping("/login")
-	public ResponseEntity<ResponseStructure<AuthResponse>>login(@RequestBody AuthRequest authRequest,HttpServletResponse response){
-		return authService.login(authRequest,response);
+	public ResponseEntity<ResponseStructure<AuthResponse>>login(@CookieValue(name="rt",required = false) String refreshToken,@CookieValue(name="at",required =false) String accessToken,@RequestBody AuthRequest authRequest,HttpServletResponse response){
+		return authService.login(refreshToken,accessToken,authRequest,response);
 	}
 	
 	////////////////********** Traditional Approach*******************//////////////
@@ -64,6 +63,12 @@ public class AuthController {
 	public ResponseEntity<SimpleResponseStructure> revokeAll(@CookieValue(name="at",required = false)String accessToken,@CookieValue(name="rt",required =false) String refreshToken,
 			HttpServletResponse response){
 		return authService.revokeAll(accessToken, refreshToken, response);
+	}
+	
+	@PostMapping("/refresh-login")
+	public ResponseEntity<SimpleResponseStructure> refreshLogin(@CookieValue(name="at",required = false)String accessToken,@CookieValue(name="rt",required =false) String refreshToken,
+			HttpServletResponse response){
+		return authService.refreshLogin(accessToken, refreshToken, response);
 	}
 	
 
