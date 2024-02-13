@@ -3,6 +3,7 @@ package com.commerse.ekart.serviceimpl;
 import java.time.LocalDateTime;
 import java.util.Date;
 import java.util.List;
+import java.util.Optional;
 import java.util.Random;
 
 import org.springframework.beans.factory.annotation.Value;
@@ -21,7 +22,9 @@ import org.springframework.stereotype.Service;
 
 import com.commerse.ekart.authexceptionhandller.IllegalRequestException;
 import com.commerse.ekart.authexceptionhandller.UserAlreadyExistsByEmailException;
+import com.commerse.ekart.authexceptionhandller.UserNotFoundException;
 import com.commerse.ekart.authexceptionhandller.UserNotLoggedInException;
+import com.commerse.ekart.authexceptionhandller.userAlreadyLoggedInException;
 import com.commerse.ekart.cache.CacheStore;
 import com.commerse.ekart.entity.AccessToken;
 import com.commerse.ekart.entity.Customer;
@@ -162,8 +165,9 @@ public class AuthServiceImpl implements AuthService {
 	}
 
 	@Override
-	public ResponseEntity<ResponseStructure<AuthResponse>> login(AuthRequest authRequest,
+	public ResponseEntity<ResponseStructure<AuthResponse>> login(String refreshToken, String accessToken,AuthRequest authRequest,
 			HttpServletResponse response) {
+		if(accessToken==null && refreshToken==null) {
 		String userName = authRequest.getEmail().split("@")[0];
 
 		UsernamePasswordAuthenticationToken token = new UsernamePasswordAuthenticationToken(userName,
@@ -188,6 +192,7 @@ public class AuthServiceImpl implements AuthService {
 
 			}).get();
 		}
+		}else throw new userAlreadyLoggedInException("");
 	}
 
 	@Override
@@ -246,41 +251,72 @@ public class AuthServiceImpl implements AuthService {
 	public void cleanupExpiredRefreshTokens() {
 		refreshTokenRepo.deleteAll(refreshTokenRepo.findAllByExpirationBefore(LocalDateTime.now()));
 	}
-	
+
 	@Override
-	public ResponseEntity<SimpleResponseStructure> revokeOther(String accessToken, String refreshToken, HttpServletResponse response) {
-		if(SecurityContextHolder.getContext().getAuthentication()!=null) {
-		userRepo.findByUserName(SecurityContextHolder.getContext().getAuthentication().getName())
-		.ifPresent(user-> {
+	public ResponseEntity<SimpleResponseStructure> revokeOther(String accessToken, String refreshToken,
+			HttpServletResponse response) {
+		if (SecurityContextHolder.getContext().getAuthentication() != null) {
+			userRepo.findByUserName(SecurityContextHolder.getContext().getAuthentication().getName())
+					.ifPresent(user -> {
 
-			blockAccessTokens(accessTokenRepo.findByUserAndIsBlockedAndTokenNot(user, false, accessToken));
+						blockAccessTokens(accessTokenRepo.findByUserAndIsBlockedAndTokenNot(user, false, accessToken));
 
-			blockRefreshTokens (refreshTokenRepo.findByUserAndIsBlockedAndTokenNot(user, false, refreshToken));
-	});
-		SimpleResponseStructure structure=new SimpleResponseStructure();
-		structure.setStatusCode(HttpStatus.OK.value());
-		structure.setMessage("Successfully log out Other devices");
-		return new ResponseEntity<SimpleResponseStructure>(structure,HttpStatus.OK);
-	}else throw new IllegalRequestException("you Are not logged in other browsers");
+						blockRefreshTokens(
+								refreshTokenRepo.findByUserAndIsBlockedAndTokenNot(user, false, refreshToken));
+					});
+			SimpleResponseStructure structure = new SimpleResponseStructure();
+			structure.setStatusCode(HttpStatus.OK.value());
+			structure.setMessage("Successfully log out Other devices");
+			return new ResponseEntity<SimpleResponseStructure>(structure, HttpStatus.OK);
+		} else
+			throw new IllegalRequestException("you Are not logged in other browsers");
 	}
 
-	
 	@Override
 	public ResponseEntity<SimpleResponseStructure> revokeAll(String accessToken, String refreshToken,
 			HttpServletResponse response) {
-		if(SecurityContextHolder.getContext().getAuthentication()!=null) {
+		if (SecurityContextHolder.getContext().getAuthentication() != null) {
 			userRepo.findByUserName(SecurityContextHolder.getContext().getAuthentication().getName())
-			.ifPresent(user-> {
+					.ifPresent(user -> {
 
-				blockAccessTokens(accessTokenRepo.findByUserAndIsBlocked(user, false));
+						blockAccessTokens(accessTokenRepo.findByUserAndIsBlocked(user, false));
 
-				blockRefreshTokens (refreshTokenRepo.findByUserAndIsBlocked(user, false));
-		});
-			SimpleResponseStructure structure=new SimpleResponseStructure();
+						blockRefreshTokens(refreshTokenRepo.findByUserAndIsBlocked(user, false));
+					});
+			SimpleResponseStructure structure = new SimpleResponseStructure();
 			structure.setStatusCode(HttpStatus.OK.value());
 			structure.setMessage("Successfully log out All devices");
-			return new ResponseEntity<SimpleResponseStructure>(structure,HttpStatus.OK);
-		}else throw new IllegalRequestException("you Are not logged in other browsers");
+			return new ResponseEntity<SimpleResponseStructure>(structure, HttpStatus.OK);
+		} else
+			throw new IllegalRequestException("you Are not logged in other browsers");
+	}
+
+	@Override
+	public ResponseEntity<SimpleResponseStructure> refreshLogin(String accessToken, String refreshToken,
+			HttpServletResponse response) {
+		if (accessToken != null) {
+			accessTokenRepo.findByToken(accessToken).ifPresent(accessToken1 -> {
+				accessToken1.setBlocked(true);
+				accessTokenRepo.save(accessToken1);
+			});
+		}
+
+		if (refreshToken != null) {
+			refreshTokenRepo.findByToken(refreshToken).ifPresent(refreshToken1 -> {
+				refreshToken1.setBlocked(true);
+				refreshTokenRepo.save(refreshToken1);
+			});
+			User user = userRepo.findByUserName(SecurityContextHolder.getContext().getAuthentication().getName())
+					.orElseThrow(() -> new UserNotFoundException("User Not found"));
+			grantAccess(response, user);
+
+			SimpleResponseStructure structure = new SimpleResponseStructure();
+			structure.setStatusCode(HttpStatus.OK.value());
+			structure.setMessage("Refresh Login and Token Rotation done Successfully");
+
+			return new ResponseEntity<SimpleResponseStructure>(structure, HttpStatus.OK);
+		} else
+			throw new UserNotLoggedInException("User is logged out and requires a login.");
 	}
 
 //	@Override
@@ -397,7 +433,5 @@ public class AuthServiceImpl implements AuthService {
 		refreshTokenRepo.save(RefreshToken.builder().token(refreshToken).isBlocked(false)
 				.expiration(LocalDateTime.now().plusSeconds(refreshExpiryInSeconds)).user(user).build());
 	}
-
-	
 
 }

@@ -59,7 +59,13 @@ public class AppilicationExceptionHandler extends ResponseEntityExceptionHandler
 	
 	
 	@ExceptionHandler(UserNotLoggedInException.class)
-	public ResponseEntity<Object> UserNotLoggedIn(UserNotLoggedInException ex) {
+	public ResponseEntity<Object> handlerUserNotLoggedIn(UserNotLoggedInException ex) {
+		return structure(HttpStatus.BAD_REQUEST, ex.getMessage(), "Illegal Request");
+	}
+	
+	
+	@ExceptionHandler(userAlreadyLoggedInException.class)
+	public ResponseEntity<Object> handleruserAlreadyLoggedIn(userAlreadyLoggedInException ex) {
 		return structure(HttpStatus.BAD_REQUEST, ex.getMessage(), "Illegal Request");
 	}
 

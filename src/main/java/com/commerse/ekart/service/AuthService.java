@@ -23,7 +23,7 @@ public interface AuthService {
 
 	ResponseEntity<ResponseStructure<UserResponse>> verifyOTP(OtpModel otpModel);
 
-	ResponseEntity<ResponseStructure<AuthResponse>> login(AuthRequest authRequest, HttpServletResponse response);
+	ResponseEntity<ResponseStructure<AuthResponse>> login(String refreshToken, String accessToken, AuthRequest authRequest, HttpServletResponse response);
 
 	ResponseEntity<String> logOut(HttpServletRequest request, HttpServletResponse response);
 
@@ -37,6 +37,9 @@ public interface AuthService {
 			HttpServletResponse response);
 
 	ResponseEntity<SimpleResponseStructure> revokeAll(String accessToken, String refreshToken,
+			HttpServletResponse response);
+
+	ResponseEntity<SimpleResponseStructure> refreshLogin(String accessToken, String refreshToken,
 			HttpServletResponse response);
 
 }
