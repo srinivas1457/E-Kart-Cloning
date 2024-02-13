@@ -16,4 +16,14 @@ public class ScheduledJobs {
 	public void removeNonVerifiedUsers() {
 		authService.deleteNonVerifiedUsers();
 	}
+	
+	@Scheduled(fixedDelay = 1000L*60*10)
+	public void callCleanupExpiredAccessTokens() {
+		authService.cleanupExpiredAccessTokens();
+	}
+	
+	@Scheduled(fixedDelay = 1000L*60*10)
+	public void callCleanupExpiredRefreshTokens() {
+		authService.cleanupExpiredRefreshTokens();
+	}
 }
