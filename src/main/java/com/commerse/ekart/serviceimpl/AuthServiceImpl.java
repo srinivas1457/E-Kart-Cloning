@@ -24,13 +24,14 @@ import com.commerse.ekart.authexceptionhandller.IllegalRequestException;
 import com.commerse.ekart.authexceptionhandller.UserAlreadyExistsByEmailException;
 import com.commerse.ekart.authexceptionhandller.UserNotFoundException;
 import com.commerse.ekart.authexceptionhandller.UserNotLoggedInException;
-import com.commerse.ekart.authexceptionhandller.userAlreadyLoggedInException;
+import com.commerse.ekart.authexceptionhandller.UserAlreadyLoggedInException;
 import com.commerse.ekart.cache.CacheStore;
 import com.commerse.ekart.entity.AccessToken;
 import com.commerse.ekart.entity.Customer;
 import com.commerse.ekart.entity.RefreshToken;
 import com.commerse.ekart.entity.Seller;
 import com.commerse.ekart.entity.User;
+import com.commerse.ekart.enums.UserRole;
 import com.commerse.ekart.repository.AccessTokenRepo;
 import com.commerse.ekart.repository.CustomerRepo;
 import com.commerse.ekart.repository.RefreshTokenRepo;
@@ -165,34 +166,35 @@ public class AuthServiceImpl implements AuthService {
 	}
 
 	@Override
-	public ResponseEntity<ResponseStructure<AuthResponse>> login(String refreshToken, String accessToken,AuthRequest authRequest,
-			HttpServletResponse response) {
-		if(accessToken==null && refreshToken==null) {
-		String userName = authRequest.getEmail().split("@")[0];
+	public ResponseEntity<ResponseStructure<AuthResponse>> login(String refreshToken, String accessToken,
+			AuthRequest authRequest, HttpServletResponse response) {
+		if (accessToken == null && refreshToken == null) {
+			String userName = authRequest.getEmail().split("@")[0];
 
-		UsernamePasswordAuthenticationToken token = new UsernamePasswordAuthenticationToken(userName,
-				authRequest.getPassword());
+			UsernamePasswordAuthenticationToken token = new UsernamePasswordAuthenticationToken(userName,
+					authRequest.getPassword());
 
-		Authentication authentication = authenticationManager.authenticate(token);
-		if (!authentication.isAuthenticated())
-			throw new UsernameNotFoundException("Failed to Authenticate the User");
+			Authentication authentication = authenticationManager.authenticate(token);
+			if (!authentication.isAuthenticated())
+				throw new UsernameNotFoundException("Failed to Authenticate the User");
 
 //		 generating the cookies and authresponse and returning to the client.
-		else {
-			return userRepo.findByUserName(userName).map(user -> {
+			else {
+				return userRepo.findByUserName(userName).map(user -> {
 
-				grantAccess(response, user);
+					grantAccess(response, user);
 
-				return ResponseEntity.ok(authStructure.setStatusCode(HttpStatus.OK.value())
-						.setData(AuthResponse.builder().userId(user.getUserId()).userName(userName)
-								.userRole(user.getUserRole().name()).isAuthenticated(true)
-								.accessExpiration(LocalDateTime.now().plusSeconds(accessExpiryInSeconds))
-								.refreshExpiration(LocalDateTime.now().plusSeconds(refreshExpiryInSeconds)).build())
-						.setMessage("Login Successfull...!!!!!!!"));
+					return ResponseEntity.ok(authStructure.setStatusCode(HttpStatus.OK.value())
+							.setData(AuthResponse.builder().userId(user.getUserId()).userName(userName)
+									.userRole(user.getUserRole().name()).isAuthenticated(true)
+									.accessExpiration(LocalDateTime.now().plusSeconds(accessExpiryInSeconds))
+									.refreshExpiration(LocalDateTime.now().plusSeconds(refreshExpiryInSeconds)).build())
+							.setMessage("Login Successfull...!!!!!!!"));
 
-			}).get();
-		}
-		}else throw new userAlreadyLoggedInException("");
+				}).get();
+			}
+		} else
+			throw new UserAlreadyLoggedInException("");
 	}
 
 	@Override
@@ -224,7 +226,7 @@ public class AuthServiceImpl implements AuthService {
 	@Override
 	public ResponseEntity<SimpleResponseStructure> logOut(String refreshToken, String accessToken,
 			HttpServletResponse response) {
-		if (refreshToken == null && accessToken == null) {
+		if (refreshToken == null) {
 			throw new UserNotLoggedInException("Please Log In First");
 		}
 		accessTokenRepo.findByToken(accessToken).ifPresent(accessToken1 -> {
@@ -292,30 +294,50 @@ public class AuthServiceImpl implements AuthService {
 	}
 
 	@Override
-	public ResponseEntity<SimpleResponseStructure> refreshLogin(String accessToken, String refreshToken,
+	public ResponseEntity<ResponseStructure<AuthResponse>> refreshLogin(String accessToken, String refreshToken,
 			HttpServletResponse response) {
+		System.out.println("insude refreshLogin method");
 		if (accessToken != null) {
 			accessTokenRepo.findByToken(accessToken).ifPresent(accessToken1 -> {
 				accessToken1.setBlocked(true);
 				accessTokenRepo.save(accessToken1);
 			});
 		}
-
-		if (refreshToken != null) {
-			refreshTokenRepo.findByToken(refreshToken).ifPresent(refreshToken1 -> {
-				refreshToken1.setBlocked(true);
-				refreshTokenRepo.save(refreshToken1);
-			});
-			User user = userRepo.findByUserName(SecurityContextHolder.getContext().getAuthentication().getName())
-					.orElseThrow(() -> new UserNotFoundException("User Not found"));
+		// validate if the token is not expired, if not expired continue..,
+		// validate if the token is blocked, if not blocked continue..,
+		
+		// existsByTokenAndISBlockedAndExpirationAfter(refreshToken, false, LocalDateTime.now())
+		System.out.println("after Access token check");
+		if(refreshToken==null)throw new UserNotLoggedInException("User is logged out and requires a login.");
+		System.out.println("after refresh token check");
+		User user = userRepo.findByUserName(jwtService.extractUserName(refreshToken))
+				.orElseThrow(() -> new UserNotFoundException("User Not found"));
+		
+		boolean result=refreshTokenRepo.existsByTokenAndIsBlockedAndExpirationAfter(refreshToken,false,LocalDateTime.now());
+		if (result) {
+			System.out.println("inside result block");
+		
 			grantAccess(response, user);
+			System.out.println("after grant access execution ");
+			
+			System.out.println("user name checking");
+				refreshTokenRepo.findByToken(refreshToken).ifPresent(refreshToken1 -> {
+					refreshToken1.setBlocked(true);
+					refreshTokenRepo.save(refreshToken1);
+				});
+				System.out.println("after refresh token blocked");
+				
+				
 
-			SimpleResponseStructure structure = new SimpleResponseStructure();
-			structure.setStatusCode(HttpStatus.OK.value());
-			structure.setMessage("Refresh Login and Token Rotation done Successfully");
-
-			return new ResponseEntity<SimpleResponseStructure>(structure, HttpStatus.OK);
-		} else
+				return ResponseEntity.ok(authStructure.setStatusCode(HttpStatus.OK.value())
+						.setData(AuthResponse.builder().userId(user.getUserId()).userName(user.getUserName())
+								.userRole(user.getUserRole().name()).isAuthenticated(true)
+								.accessExpiration(LocalDateTime.now().plusSeconds(accessExpiryInSeconds))
+								.refreshExpiration(LocalDateTime.now().plusSeconds(refreshExpiryInSeconds)).build())
+						.setMessage("Login Refreshed...!!!!!!!"));
+			
+				}
+		else
 			throw new UserNotLoggedInException("User is logged out and requires a login.");
 	}
 
@@ -347,10 +369,10 @@ public class AuthServiceImpl implements AuthService {
 	private <T extends User> T maptoRespectiveChild(UserRequest userRequest) {
 		User user = null;
 		switch (userRequest.getUserRole()) {
-		case CUSTOMER -> {
+		case "CUSTOMER" -> {
 			user = new Customer();
 		}
-		case SELLER -> {
+		case "SELLER" -> {
 			user = new Seller();
 		}
 		default -> new IllegalRequestException("Invalid User Role");
@@ -359,7 +381,7 @@ public class AuthServiceImpl implements AuthService {
 		user.setUserName(userRequest.getEmail().split("@")[0]);
 		user.setEmail(userRequest.getEmail());
 		user.setPassword(passwordEncoder.encode(userRequest.getPassword()));
-		user.setUserRole(userRequest.getUserRole());
+		user.setUserRole(UserRole.valueOf(userRequest.getUserRole()));
 
 		return (T) user;
 	}
@@ -373,10 +395,10 @@ public class AuthServiceImpl implements AuthService {
 	private User saveUser(UserRequest userRequest) {
 		User user = null;
 		switch (userRequest.getUserRole()) {
-		case CUSTOMER -> {
+		case "CUSTOMER" -> {
 			user = customerRepo.save(maptoRespectiveChild(userRequest));
 		}
-		case SELLER -> {
+		case "SELLER" -> {
 			user = sellerRepo.save(maptoRespectiveChild(userRequest));
 		}
 		default -> new IllegalRequestException("Invalid User Role");
@@ -421,7 +443,7 @@ public class AuthServiceImpl implements AuthService {
 		String accessToken = jwtService.generateAccessToken(user.getUserName());
 		String refreshToken = jwtService.generateRefreshToken(user.getUserName());
 
-		// adding access and referesh tokens cookies to the response
+		// adding access and refresh tokens cookies to the response
 		response.addCookie(cookieManager.configure(new Cookie("at", accessToken), accessExpiryInSeconds));
 		response.addCookie(cookieManager.configure(new Cookie("rt", refreshToken), refreshExpiryInSeconds));
 

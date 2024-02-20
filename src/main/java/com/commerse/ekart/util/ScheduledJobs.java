@@ -11,6 +11,7 @@ import lombok.AllArgsConstructor;
 @AllArgsConstructor
 public class ScheduledJobs {
 	private AuthService authService;
+	
 
 	@Scheduled(cron = "0 0 0 ? * *")
 	public void removeNonVerifiedUsers() {

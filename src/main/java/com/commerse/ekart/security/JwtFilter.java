@@ -1,8 +1,8 @@
 package com.commerse.ekart.security;
 
+import java.io.IOException;
 import java.util.Optional;
 
-import org.hibernate.boot.model.naming.IllegalIdentifierException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -11,11 +11,9 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import com.commerse.ekart.authexceptionhandller.IllegalRequestException;
-import com.commerse.ekart.authexceptionhandller.UserNotLoggedInException;
 import com.commerse.ekart.entity.AccessToken;
 import com.commerse.ekart.repository.AccessTokenRepo;
 
-import io.jsonwebtoken.io.IOException;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.Cookie;
@@ -37,7 +35,7 @@ public class JwtFilter extends OncePerRequestFilter {
 
 	@Override
 	protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
-			throws ServletException, IOException, java.io.IOException {
+			throws ServletException, IOException{
 		String at = null;
 		String rt = null;
 		Cookie[] cookies = request.getCookies();
@@ -52,10 +50,10 @@ public class JwtFilter extends OncePerRequestFilter {
 			String userName = null;
 
 			if (at != null && rt != null) {
-
+				System.out.println("Entered into JWT Filter");
 				Optional<AccessToken> accessToken = accessTokenRepo.findByTokenAndIsBlocked(at, false);
 
-				if (accessToken == null)
+				if (!accessToken.isPresent())
 					throw new IllegalRequestException("User Not Logged In");
 				else {
 					log.info("Authenticating the token.....");
@@ -77,3 +75,12 @@ public class JwtFilter extends OncePerRequestFilter {
 	}
 
 }
+
+
+
+
+
+
+
+
+

@@ -9,5 +9,5 @@ import lombok.Data;
 public class UserRequest {
 	private String email;
 	private String password;
-	private UserRole userRole;
+	private String userRole;
 }

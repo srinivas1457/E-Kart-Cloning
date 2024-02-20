@@ -2,6 +2,7 @@ package com.commerse.ekart.controller;
 
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.CookieValue;
+import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -22,6 +23,7 @@ import lombok.AllArgsConstructor;
 @RestController
 @RequestMapping("/ekart/v1")
 @AllArgsConstructor
+@CrossOrigin(allowCredentials = "true",origins = "http://localhost:5173/")
 public class AuthController {
 	
 	private AuthService authService;
@@ -66,7 +68,7 @@ public class AuthController {
 	}
 	
 	@PostMapping("/refresh-login")
-	public ResponseEntity<SimpleResponseStructure> refreshLogin(@CookieValue(name="at",required = false)String accessToken,@CookieValue(name="rt",required =false) String refreshToken,
+	public ResponseEntity<ResponseStructure<AuthResponse>> refreshLogin(@CookieValue(name="at",required = false)String accessToken,@CookieValue(name="rt",required =false) String refreshToken,
 			HttpServletResponse response){
 		return authService.refreshLogin(accessToken, refreshToken, response);
 	}

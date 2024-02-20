@@ -64,8 +64,14 @@ public class AppilicationExceptionHandler extends ResponseEntityExceptionHandler
 	}
 	
 	
-	@ExceptionHandler(userAlreadyLoggedInException.class)
-	public ResponseEntity<Object> handleruserAlreadyLoggedIn(userAlreadyLoggedInException ex) {
+	@ExceptionHandler(UserAlreadyLoggedInException.class)
+	public ResponseEntity<Object> handleruserAlreadyLoggedIn(UserAlreadyLoggedInException ex) {
+		return structure(HttpStatus.BAD_REQUEST, ex.getMessage(), "Illegal Request");
+	}
+	
+	
+	@ExceptionHandler(UserAlreadyExistsByEmailException.class)
+	public ResponseEntity<Object> handlerUserAlreadyExistsByEmail(UserAlreadyExistsByEmailException ex) {
 		return structure(HttpStatus.BAD_REQUEST, ex.getMessage(), "Illegal Request");
 	}
 
